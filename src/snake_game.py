@@ -21,6 +21,10 @@ class Direction(Enum):
     LEFT = 2
     UP = 3
     DOWN = 4
+    RIGHT_RIGHT = 5
+    LEFT_LEFT = 6
+    UP_UP = 7
+    DOWN_DOWN = 8
 #==============================================================================#   
 Point = namedtuple('Point', 'x, y')
 
@@ -32,7 +36,7 @@ BLUE2 = (0, 100, 255)
 BLACK = (0,0,0)
 
 BLOCK_SIZE = 20
-SPEED = 40
+SPEED = 100
 #==============================================================================#
 class SnakeGameAI:
 #------------------------------------------------------------------------------#    
@@ -65,7 +69,12 @@ class SnakeGameAI:
         self.food = Point(x, y)
         if self.food in self.snake:
             self._place_food()
-#------------------------------------------------------------------------------#        
+#------------------------------------------------------------------------------#
+###
+# play_step(action) - plays the step that the agent randomly chose. It also verifies
+#               if the step is a collision or not
+# action - the final step that was chosen and is transmitted to be played
+###
     def play_step(self, action):
         self.frame_iteration += 1
         # 1. collect user input
@@ -110,7 +119,15 @@ class SnakeGameAI:
                             or point.y > self.h - BLOCK_SIZE or point.y < 0):
             return True
         # hits itself
+        print("POINT  ")
+        print(point)
+        print("SNAKE  ")
+        print(self.snake)
+        print(self.snake[-1])
+        print(self.snake[1:])
         if point in self.snake[1:]:
+            return True
+        if point in self.snake[-1]:
             return True
 
         return False

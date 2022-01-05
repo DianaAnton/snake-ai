@@ -15,7 +15,8 @@ class Agent:
         self.epsilon = 0 # randomness
         self.gamma = 0.9 # discount rate, value smaller than 1
         self.memory = deque(maxlen=MAX_MEMORY) # popleft() if it exceeds the maxlen
-        self.model = Linear_QNet(11, 256, 3) # 11 states, 3 output states
+        # modified to 18 states so that I might fix the snake going in circles
+        self.model = Linear_QNet(18, 256, 3) # 11 states, 3 output states
         self.trainer = QTrainer(self.model, learning_rate = LR, gamma = self.gamma)
 #------------------------------------------------------------------------------#
     def get_state(self, game):
@@ -29,6 +30,11 @@ class Agent:
         dir_r = game.direction == Direction.RIGHT
         dir_u = game.direction == Direction.UP
         dir_d = game.direction == Direction.DOWN
+
+        dir_l_l = game.direction == Direction.LEFT_LEFT
+        dir_r_r = game.direction == Direction.RIGHT_RIGHT
+        dir_u_u = game.direction == Direction.UP_UP
+        dir_d_d = game.direction == Direction.DOWN_DOWN
 
         state = [
             # Danger straight
@@ -48,12 +54,34 @@ class Agent:
             (dir_u and game.is_collision(point_l)) or 
             (dir_r and game.is_collision(point_u)) or 
             (dir_l and game.is_collision(point_d)),
+
+            # Danger straight x2
+            (dir_d_d and game.is_collision(point_r)) or
+            (dir_u_u and game.is_collision(point_l)) or
+            (dir_r_r and game.is_collision(point_u)) or
+            (dir_l_l and game.is_collision(point_d)),
+
+            # Danger right x2
+            (dir_d_d and game.is_collision(point_r)) or
+            (dir_u_u and game.is_collision(point_l)) or
+            (dir_r_r and game.is_collision(point_u)) or
+            (dir_l_l and game.is_collision(point_d)),
+
+            # Danger left x2
+            (dir_d_d and game.is_collision(point_r)) or
+            (dir_u_u and game.is_collision(point_l)) or
+            (dir_r_r and game.is_collision(point_u)) or
+            (dir_l_l and game.is_collision(point_d)),
             
             # Move direction
             dir_l,
             dir_r,
             dir_u,
             dir_d,
+            dir_l_l,
+            dir_r_r,
+            dir_u_u,
+            dir_d_d,
             
             # Food location 
             game.food.x < game.head.x,  # food left
@@ -103,10 +131,10 @@ def train():
         # get olt state
         state_old = agent.get_state(game)
 
-        # get move
+        # get next move
         final_move = agent.get_action(state_old)
 
-        # perform move and get new state
+        # perform in game the move and get new state
         reward, done, score = game.play_step(final_move)
         state_new = agent.get_state(game)
 
